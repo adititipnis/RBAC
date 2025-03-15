@@ -3,7 +3,7 @@ const configs = {
     apiUrl: 'http://localhost:3000'
   },
   production: {
-    apiUrl: process.env.VITE_API_URL || 'https://your-vercel-app-url.vercel.app'
+    apiUrl: import.meta.env.VITE_API_URL || 'https://your-vercel-app-url.vercel.app'
   },
   test: {
     apiUrl: 'http://localhost:3000'
