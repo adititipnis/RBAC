@@ -6,6 +6,7 @@ const connectDB = require('./config/database');
 const messageRoutes = require('./routes/messageRoutes');
 const authRoutes = require('./routes/authRoutes');
 const { apiLimiter } = require('./middleware/rateLimiter');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
@@ -37,6 +38,9 @@ app.use(express.json());
 // Routes
 app.use('/', messageRoutes);
 app.use('/auth', authRoutes);
+
+// Error handling middleware (add this last)
+app.use(errorHandler);
 
 // Start server in all environments (remove the condition)
 app.listen(config.port, () => {
