@@ -1,14 +1,13 @@
-const config = {
+const configs = {
   development: {
     apiUrl: 'http://localhost:3000'
   },
   production: {
-    apiUrl: import.meta.env.VITE_API_URL || 'https://api.yoursite.com'
+    apiUrl: process.env.VITE_API_URL || 'https://your-vercel-app-url.vercel.app'
   },
   test: {
     apiUrl: 'http://localhost:3000'
   }
 }
 
-const environment = import.meta.env.MODE || 'development'
-export const currentConfig = config[environment] 
+export const currentConfig = configs[import.meta.env.MODE] || configs.development 
