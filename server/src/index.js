@@ -35,7 +35,10 @@ app.use(express.json());
 app.use('/', messageRoutes);
 app.use('/auth', authRoutes);
 
-// Start the server
+// Start server in all environments (remove the condition)
 app.listen(config.port, () => {
   console.log(`Server is running on http://localhost:${config.port}`);
-}); 
+});
+
+// Export for Vercel
+module.exports = app; 
