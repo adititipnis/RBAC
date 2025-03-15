@@ -9,6 +9,9 @@ const { apiLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
+// Trust proxy - add this before other middleware
+app.set('trust proxy', 1);
+
 // Connect to MongoDB
 connectDB();
 
