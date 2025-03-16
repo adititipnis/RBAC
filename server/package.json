@@ -10,7 +10,9 @@
     "start": "NODE_ENV=production node src/index.js",
     "dev": "NODE_ENV=development nodemon src/index.js",
     "test": "NODE_ENV=test node src/index.js",
-    "create-user": "node scripts/createUser.js"
+    "create-user": "node scripts/createUser.js",
+    "init-db": "node scripts/init/index.js"
+
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -4,6 +4,11 @@ import './Dashboard.css'
 function Dashboard() {
   const { user, logout } = useAuth()
 
+  const getDisplayRole = (roles) => {
+    if (!roles?.length) return 'No Role'
+    return roles[0] || 'No Role'
+  }
+
   return (
     <div className="dashboard-container">
       <nav className="nav-bar">
@@ -13,10 +18,9 @@ function Dashboard() {
         </button>
       </nav>
       <div className="welcome-section">
-        <h2>Welcome back, {user.username}!</h2>
-        <p>{user.role === 'admin' ? 'Administrator' : 'User'}</p>
+        <h2>Welcome back, {user.name}!</h2>
+        <p>Role: {getDisplayRole(user.roles)}</p>
       </div>
-      {/* Add more dashboard content here */}
     </div>
   )
 }

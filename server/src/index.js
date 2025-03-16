@@ -16,6 +16,9 @@ app.set('trust proxy', 1);
 // Connect to MongoDB
 connectDB();
 
+// Import models - make sure this is before any route handlers
+require('./models');
+
 // Security headers
 app.use(helmet());
 
