@@ -67,7 +67,7 @@ async function createUser() {
       name: answers.name,
       email: answers.email,
       password: answers.password,
-      roles: [role._id]
+      role: role._id
     })
 
     // Add clientId if required for the role
@@ -76,6 +76,7 @@ async function createUser() {
       user.clientId = clientId
     }
 
+    console.log('User:', JSON.stringify(user, null, 2))
     await user.save()
     console.log('\nUser created successfully!')
     console.log('Name:', answers.name)

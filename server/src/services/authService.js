@@ -24,7 +24,7 @@ class AuthService {
         throw new Error('Account is temporarily locked. Please try again later')
       }
 
-      if (!user.clientId && user.roles.some(role => 
+      if (!user.clientId && user.role.some(role => 
         ['Client Super Admin', 'Client Admin'].includes(role.name)
       )) {
         throw new Error('Invalid account configuration')
@@ -44,7 +44,7 @@ class AuthService {
       user.lockUntil = null
       await user.save()
       
-      const permissions = user.roles.reduce((acc, role) => {
+      const permissions = user.role.reduce((acc, role) => {
         role.permissions.forEach(perm => {
           if (!acc[perm.pageType]) {
             acc[perm.pageType] = new Set()
@@ -64,7 +64,7 @@ class AuthService {
           userId: user._id,
           name: user.name,
           email: user.email,
-          roles: user.roles?.map(role => role.name) || [],
+          roles: user.role?.map(role => role.name) || [],
           permissions: flatPermissions,
           ...(user.clientId ? { clientId: user.clientId._id } : {})
         },
@@ -77,7 +77,7 @@ class AuthService {
         user: {
           name: user.name,
           email: user.email,
-          roles: user.roles?.map(role => role.name) || [],
+          roles: user.role?.map(role => role.name) || [],
           permissions: flatPermissions,
           ...(user.clientId ? { clientId: user.clientId._id } : {})
         }

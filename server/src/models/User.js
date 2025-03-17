@@ -18,38 +18,34 @@ const userSchema = new Schema({
   },
   password: {
     type: String,
+    required: true,
+    select: false
+  },
+  role: {
+    type: Schema.Types.ObjectId,
+    ref: 'Role',
     required: true
   },
-  roles: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Role'  // References the Role model
-  }],
   clientId: {
     type: Schema.Types.ObjectId,
     ref: 'Client',
     validate: {
       validator: async function() {
-        // Return early if no roles
-        if (!this.roles || this.roles.length === 0) return true;
+        if (!this.role) return true;
 
         try {
           const Role = mongoose.model('Role');
-          // Await the role lookup
-          const userRoles = await Role.find({ _id: { $in: this.roles } }).exec();
+          const userRole = await Role.findById(this.role).exec();
           
-          // Check if we found all roles
-          if (userRoles.length !== this.roles.length) {
-            throw new Error('Some roles were not found');
+          if (!userRole) {
+            throw new Error('Role not found');
           }
 
-          const roleNames = userRoles.map(r => r.name);
-          const needsClient = roleNames.some(name => 
-            name === 'Client Super Admin' || name === 'Client Admin'
-          );
+          const roleName = userRole.name;
+          const needsClient = roleName === 'Client Super Admin' || roleName === 'Client Admin';
 
           return !needsClient || (this.clientId != null);
         } catch (error) {
-          // Validation should fail if we can't verify the roles
           return false;
         }
       },

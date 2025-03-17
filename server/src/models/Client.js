@@ -16,7 +16,7 @@ const clientSchema = new Schema({
       validator: async function(userId) {
         const User = mongoose.model('User')
         const user = await User.findById(userId).populate('roles')
-        return user && user.roles.some(role => role.name === 'FE Admin')
+        return user && user.role.some(role => role.name === 'FE Admin')
       },
       message: 'Client can only be created by a Super Admin'
     }

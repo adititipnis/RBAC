@@ -6,6 +6,7 @@ const connectDB = require('./config/database');
 const messageRoutes = require('./routes/messageRoutes');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const roleRoutes = require('./routes/roleRoutes');
 const { apiLimiter } = require('./middleware/rateLimiter');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -43,6 +44,7 @@ app.use(express.json());
 app.use('/', messageRoutes);
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
+app.use('/roles', roleRoutes);
 
 // Error handling middleware (add this last)
 app.use(errorHandler);
