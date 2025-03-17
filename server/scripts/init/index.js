@@ -31,6 +31,7 @@ const defaultRoles = [
   {
     name: 'FE Admin',
     permissions: [
+      { pageType: 'userManagement', allowedActions: ['create', 'read', 'update', 'delete', 'search'] },
       { pageType: 'clientManagement', allowedActions: ['create', 'read', 'update', 'delete', 'search'] },
       { pageType: 'diagnostic', allowedActions: ['create', 'read', 'update', 'delete', 'search'] },
       { pageType: 'dashboard', allowedActions: ['create', 'read', 'update', 'delete', 'search'] },
@@ -47,7 +48,11 @@ const defaultRoles = [
       { pageType: 'dashboard', allowedActions: ['read', 'search'] },
       { pageType: 'report', allowedActions: ['read', 'search'] }
     ]
-  }
+  },
+  {
+    name: 'Client Admin',
+    permissions: []
+  },
 ]
 
 async function initDatabase() {
@@ -77,9 +82,17 @@ async function initDatabase() {
     await PageConfig.insertMany(defaultPages)
     console.log('Pages initialized')
 
-    // Initialize roles
+    // Initialize roles one by one to handle errors better
     console.log('Initializing roles...')
-    await Role.insertMany(defaultRoles)
+    for (const roleData of defaultRoles) {
+      try {
+        await Role.create(roleData)
+        console.log(`Created role: ${roleData.name}`)
+      } catch (error) {
+        console.error(`Error creating role ${roleData.name}:`, error.message)
+        throw error
+      }
+    }
     console.log('Roles initialized')
 
     await mongoose.disconnect()

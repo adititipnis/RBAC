@@ -22,12 +22,28 @@ const roleSchema = new Schema({
     type: String,
     required: true,
     unique: true,
-    enum: ['Client Super Admin', 'Client Admin', 'User', 'Admin']
+    validate: {
+      validator: function(v) {
+        // Allow Super Admin and other standard roles
+        const validRoles = ['Super Admin', 'FE Admin', 'Client Super Admin', 'Client Admin']
+        return validRoles.includes(v)
+      },
+      message: props => `${props.value} is not a valid role name`
+    }
   },
   description: {
     type: String
   },
-  permissions: [permissionSchema]
+  permissions: [{
+    pageType: {
+      type: String,
+      required: true
+    },
+    allowedActions: [{
+      type: String,
+      enum: ['create', 'read', 'update', 'delete', 'search']
+    }]
+  }]
 }, {
   timestamps: true
 })
@@ -56,6 +72,12 @@ roleSchema.pre('save', async function(next) {
           throw new Error(`Invalid action "${action}" for page "${perm.pageType}"`)
         }
       }
+    }
+
+    // Prevent modification of Super Admin role
+    if (this.isModified() && this.name === 'Super Admin' && !this.isNew) {
+      const error = new Error('Super Admin role cannot be modified')
+      return next(error)
     }
 
     next()

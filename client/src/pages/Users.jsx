@@ -174,11 +174,14 @@ function Users() {
               required
             >
               <option value="">Select a role</option>
-              {roles.map(role => (
-                <option key={role._id} value={role._id}>
-                  {role.name}
-                </option>
-              ))}
+              {roles
+                .filter(role => role.name !== 'Super Admin')
+                .map(role => (
+                  <option key={role._id} value={role._id}>
+                    {role.name}
+                  </option>
+                ))
+              }
             </select>
           </div>
           <div className="form-actions">

@@ -3,6 +3,7 @@ const router = express.Router()
 const bcrypt = require('bcryptjs')
 const authMiddleware = require('../middleware/auth')
 const User = require('../models/User')
+const Role = require('../models/Role')
 
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -19,15 +20,33 @@ router.get('/', authMiddleware, async (req, res) => {
 
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { name, email, password, role } = req.body
-    const user = new User({ name, email, password, role })
+    const { name, email, password, role: roleId } = req.body
+
+    // Check if trying to assign Super Admin role
+    const role = await Role.findById(roleId)
+    if (!role) {
+      return res.status(400).json({ message: 'Invalid role' })
+    }
+
+    if (role.name === 'Super Admin') {
+      return res.status(403).json({ 
+        message: 'Super Admin role cannot be assigned through this interface' 
+      })
+    }
+
+    const user = new User({
+      name,
+      email,
+      password,
+      role: roleId
+    })
+
     await user.save()
     
     const populatedUser = await User.findById(user._id)
-      .select('name email role')
+      .select('-password')
       .populate('role', 'name')
-      .lean()
-    
+
     res.status(201).json(populatedUser)
   } catch (error) {
     console.error('Error creating user:', error)
