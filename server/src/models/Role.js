@@ -41,7 +41,7 @@ const roleSchema = new Schema({
     },
     allowedActions: [{
       type: String,
-      enum: ['create', 'read', 'update', 'delete', 'search']
+      enum: ['create', 'read', 'update', 'delete']
     }]
   }]
 }, {
@@ -59,7 +59,7 @@ roleSchema.pre('save', async function(next) {
     // Get all valid pages
     const pages = await PageConfig.find({})
     const validPages = new Set(pages.map(p => p.name))
-    const validActions = new Set(['create', 'read', 'update', 'delete', 'search'])
+    const validActions = new Set(['create', 'read', 'update', 'delete'])
 
     // Validate each permission
     for (const perm of this.permissions) {

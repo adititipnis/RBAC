@@ -1,19 +1,12 @@
 const express = require('express')
 const router = express.Router()
-const authMiddleware = require('../middleware/auth')
-const Role = require('../models/Role')
+const roleController = require('../controllers/roleController')
+const auth = require('../middleware/auth')
 
-router.get('/', authMiddleware, async (req, res) => {
-  try {
-    const roles = await Role.find({})
-      .select('_id name permissions')
-      .lean()
-
-    console.log('Sending roles:', roles)
-    res.json(roles)
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching roles' })
-  }
-})
+router.get('/', auth, roleController.getRoles)
+router.post('/', auth, roleController.createRole)
+router.get('/:id', auth, roleController.getRole)
+router.put('/:id', auth, roleController.updateRole)
+router.delete('/:id', auth, roleController.deleteRole)
 
 module.exports = router 

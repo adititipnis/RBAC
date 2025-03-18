@@ -14,8 +14,10 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
+    
     try {
-      const response = await fetch('http://localhost:3000/auth/login', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -27,15 +29,16 @@ function Login() {
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || 'Login failed')
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Login failed')
       }
 
       const data = await response.json()
       login(data)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.message)
+      console.error('Login error:', err)
+      setError(err.message || 'Failed to login. Please try again.')
     }
   }
 
@@ -64,9 +67,7 @@ function Login() {
             required
           />
         </div>
-        <button type="submit" className="login-button">
-          Sign In
-        </button>
+        <button type="submit">Sign In</button>
       </form>
     </div>
   )

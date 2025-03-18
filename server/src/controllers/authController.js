@@ -3,19 +3,20 @@ const authService = require('../services/authService')
 class AuthController {
   async login(req, res) {
     try {
-      console.log('Login request received:', req.body)
-      const { username, password } = req.body
-      
-      if (!username || !password) {
-        return res.status(400).json({ message: 'Username and password are required' })
+      const { email, password } = req.body
+
+      if (!email || !password) {
+        return res.status(400).json({ 
+          message: 'Email and password are required' 
+        })
       }
 
-      const result = await authService.login(username, password)
-      console.log('Login successful for user:', username)
+      const result = await authService.login(email, password)
       res.json(result)
     } catch (error) {
-      console.error('Login error:', error.message)
-      res.status(401).json({ message: error.message })
+      res.status(400).json({ 
+        message: error.message || 'Authentication failed'
+      })
     }
   }
 }

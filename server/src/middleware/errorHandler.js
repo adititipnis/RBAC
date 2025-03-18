@@ -1,5 +1,5 @@
 const errorHandler = (err, req, res, next) => {
-  console.error('Error:', err)
+  console.error(err.stack)
 
   if (err.name === 'MongoTimeoutError') {
     return res.status(503).json({ message: 'Database timeout. Please try again.' })
@@ -9,7 +9,11 @@ const errorHandler = (err, req, res, next) => {
     return res.status(503).json({ message: 'Database connection error. Please try again.' })
   }
 
-  res.status(500).json({ message: 'Internal server error' })
+  // Always return JSON
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal Server Error',
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  })
 }
 
 module.exports = errorHandler 
