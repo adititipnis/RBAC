@@ -7,18 +7,22 @@ describe('Auth Endpoints', () => {
   let superAdminRole
 
   beforeEach(async () => {
-    // Create test role
+    // Create test role with specific permissions
     superAdminRole = await Role.create({
       name: 'Super Admin',
       permissions: [
         {
-          pageType: 'users',
+          pageType: 'userManagement',
           allowedActions: ['create', 'read', 'update', 'delete', 'search']
+        },
+        {
+          pageType: 'dashboard',
+          allowedActions: ['read']
         }
       ]
     })
 
-    // Create test user with your actual test credentials
+    // Create test user
     await User.create({
       name: 'Aditi Tipnis',
       email: 'adititipnis@gmai.com',
@@ -28,7 +32,7 @@ describe('Auth Endpoints', () => {
   })
 
   describe('POST /auth/login', () => {
-    it('should login with valid credentials', async () => {
+    it('should login with valid credentials and return correct permissions', async () => {
       const res = await request(app)
         .post('/auth/login')
         .send({
@@ -41,7 +45,17 @@ describe('Auth Endpoints', () => {
       expect(res.body.user).toHaveProperty('name', 'Aditi Tipnis')
       expect(res.body.user).toHaveProperty('email', 'adititipnis@gmai.com')
       expect(res.body.user.role).toHaveProperty('name', 'Super Admin')
+      
+      // Check permissions structure
       expect(res.body.user).toHaveProperty('permissions')
+      expect(res.body.user.permissions).toHaveProperty('userManagement')
+      expect(res.body.user.permissions).toHaveProperty('dashboard')
+      expect(res.body.user.permissions.userManagement).toEqual(
+        expect.arrayContaining(['create', 'read', 'update', 'delete', 'search'])
+      )
+      expect(res.body.user.permissions.dashboard).toEqual(
+        expect.arrayContaining(['read'])
+      )
     })
 
     it('should fail with invalid password', async () => {

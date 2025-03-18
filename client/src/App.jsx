@@ -8,25 +8,25 @@ import './App.css'
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route
-            path="/dashboard"
+          <Route 
+            path="/users" 
             element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/users"
-            element={
-              <ProtectedRoute>
+              <ProtectedRoute pageType="userManagement">
                 <Users />
               </ProtectedRoute>
-            }
+            } 
+          />
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute pageType="dashboard">
+                <Dashboard />
+              </ProtectedRoute>
+            } 
           />
           <Route
             path="/"
@@ -37,8 +37,8 @@ function App() {
             }
           />
         </Routes>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   )
 }
 

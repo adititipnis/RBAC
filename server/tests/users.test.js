@@ -13,7 +13,7 @@ describe('User Management', () => {
       name: 'Super Admin',
       permissions: [
         {
-          pageType: 'users',
+          pageType: 'userManagement',
           allowedActions: ['create', 'read', 'update', 'delete', 'search']
         }
       ]

@@ -2,27 +2,36 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import './NavBar.css'
 
-function NavBar() {
-  const { user, logout } = useAuth()
+const NavBar = () => {
+  const { user, logout, hasPermission } = useAuth()
   const location = useLocation()
 
   const isActive = (path) => {
-    return location.pathname === path ? 'nav-link active' : 'nav-link'
+    return location.pathname === path ? 'active' : ''
   }
 
   return (
-    <nav className="nav-bar">
-      <div className="nav-left">
-        <Link to="/dashboard" className={isActive('/dashboard')}>Dashboard</Link>
-        <div className="nav-links">
-          {user.role.name === 'Super Admin' && (
-            <Link to="/users" className={isActive('/users')}>User Management</Link>
-          )}
-        </div>
-      </div>
-      <div className="nav-right">
-        <span className="user-name">{user.name}</span>
-        <button className="logout-button" onClick={logout}>Sign Out</button>
+    <nav className="navbar">
+      <div className="nav-brand">RBAC Demo</div>
+      <ul className="nav-links">
+        {hasPermission('dashboard') && (
+          <li>
+            <Link to="/dashboard" className={isActive('/dashboard')}>
+              Dashboard
+            </Link>
+          </li>
+        )}
+        {hasPermission('userManagement') && (
+          <li>
+            <Link to="/users" className={isActive('/users')}>
+              Users
+            </Link>
+          </li>
+        )}
+      </ul>
+      <div className="nav-user">
+        <span>{user?.name}</span>
+        <button onClick={logout}>Logout</button>
       </div>
     </nav>
   )

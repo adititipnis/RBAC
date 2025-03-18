@@ -9,10 +9,6 @@ class AuthService {
           path: 'role',
           select: 'name permissions'
         })
-        .populate({
-          path: 'clientId',
-          select: 'active isActive'
-        })
         .maxTimeMS(5000)
 
       if (!user) {
@@ -25,9 +21,9 @@ class AuthService {
       }
 
       const permissions = {}
-      if (user.role?.permissions?.length > 0) {
-        user.role.permissions.forEach(perm => {
-          permissions[perm.pageType] = perm.allowedActions
+      if (user.role?.permissions) {
+        user.role.permissions.forEach(permission => {
+          permissions[permission.pageType] = permission.allowedActions
         })
       }
 
@@ -44,7 +40,10 @@ class AuthService {
 
       const token = jwt.sign(userData, process.env.JWT_SECRET, { expiresIn: '1h' })
 
-      return { token, user: userData }
+      return { 
+        token, 
+        user: userData
+      }
     } catch (error) {
       throw error
     }

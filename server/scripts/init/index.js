@@ -51,7 +51,9 @@ const defaultRoles = [
   },
   {
     name: 'Client Admin',
-    permissions: []
+    permissions: [
+      { pageType: 'dashboard', allowedActions: ['create', 'read', 'update', 'delete', 'search'] },
+    ]
   },
 ]
 
