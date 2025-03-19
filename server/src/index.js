@@ -26,7 +26,7 @@ app.use(apiLimiter);
 // Routes
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
-app.use('/roles', roleRoutes);
+app.use('/api/roles', roleRoutes);
 
 // Error Handler
 app.use(errorHandler);

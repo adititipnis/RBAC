@@ -7,7 +7,7 @@ class AuthService {
       const user = await User.findOne({ email })
         .populate({
           path: 'role',
-          select: 'name permissions'
+          select: 'name permissions hierarchyLevel'
         })
         .maxTimeMS(5000)
 
@@ -33,7 +33,8 @@ class AuthService {
         email: user.email,
         role: {
           id: user.role._id,
-          name: user.role.name
+          name: user.role.name,
+          hierarchyLevel: user.role.hierarchyLevel
         },
         permissions
       }

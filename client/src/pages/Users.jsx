@@ -16,7 +16,7 @@ function Users() {
     password: '',
     role: ''
   })
-  const { token } = useAuth()
+  const { user, token } = useAuth()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,7 +28,7 @@ function Users() {
 
         const [usersResponse, rolesResponse] = await Promise.all([
           fetch('http://localhost:3000/users', { headers }),
-          fetch('http://localhost:3000/roles', { headers })
+          fetch('http://localhost:3000/api/roles', { headers })
         ])
 
         if (!usersResponse.ok || !rolesResponse.ok) {
@@ -54,6 +54,11 @@ function Users() {
       fetchData()
     }
   }, [token])
+
+  // Filter roles based on current user's hierarchy level
+  const availableRoles = roles.filter(role => 
+    role.hierarchyLevel > user.role.hierarchyLevel
+  )
 
   const handleCreateUser = async (e) => {
     e.preventDefault()
@@ -174,14 +179,11 @@ function Users() {
               required
             >
               <option value="">Select a role</option>
-              {roles
-                .filter(role => role.name !== 'Super Admin')
-                .map(role => (
-                  <option key={role._id} value={role._id}>
-                    {role.name}
-                  </option>
-                ))
-              }
+              {availableRoles.map(role => (
+                <option key={role._id} value={role._id}>
+                  {role.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="form-actions">

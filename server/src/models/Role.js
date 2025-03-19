@@ -31,6 +31,10 @@ const roleSchema = new Schema({
       message: props => `${props.value} is not a valid role name`
     }
   },
+  hierarchyLevel: {
+    type: Number,
+    required: true
+  },
   description: {
     type: String
   },
@@ -86,6 +90,16 @@ if (process.env.NODE_ENV !== 'test') {
       next(error)
     }
   })
+}
+
+// Method to check if this role can manage another role
+roleSchema.methods.canManage = function(targetRole) {
+  return this.hierarchyLevel < targetRole.hierarchyLevel
+}
+
+// Add a static method to get roles that can be managed by a given role
+roleSchema.statics.getManageableRoles = function(roleHierarchyLevel) {
+  return this.find({ hierarchyLevel: { $gt: roleHierarchyLevel } })
 }
 
 const Role = mongoose.model('Role', roleSchema)

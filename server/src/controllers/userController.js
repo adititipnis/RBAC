@@ -1,13 +1,15 @@
 const User = require('../models/User')
+const Role = require('../models/Role')
 
 class UserController {
   async listUsers(req, res) {
     try {
-      const users = await User.find()
-        .populate('role', 'name')
+      const users = await User.find({})
+        .populate('role')
         .select('-password')
       res.json(users)
     } catch (error) {
+      console.error('Error in listUsers:', error)
       res.status(500).json({ message: error.message })
     }
   }

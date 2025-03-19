@@ -6,6 +6,7 @@ const User = require('../models/User')
 const Role = require('../models/Role')
 const userController = require('../controllers/userController')
 const checkPermission = require('../middleware/checkPermission')
+const validateUserManagement = require('../middleware/validateUserManagement')
 
 // Apply auth middleware to all routes
 router.use(auth)
@@ -14,9 +15,9 @@ router.use(auth)
 router.use(checkPermission('userManagement'))
 
 router.get('/', userController.listUsers)
-router.post('/', checkPermission('userManagement', 'create'), userController.createUser)
+router.post('/', validateUserManagement, userController.createUser)
 router.get('/:id', userController.getUser)
-router.put('/:id', checkPermission('userManagement', 'update'), userController.updateUser)
-router.delete('/:id', checkPermission('userManagement', 'delete'), userController.deleteUser)
+router.put('/:id', validateUserManagement, userController.updateUser)
+router.delete('/:id', validateUserManagement, userController.deleteUser)
 
 module.exports = router 

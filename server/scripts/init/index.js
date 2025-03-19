@@ -18,6 +18,7 @@ const defaultPages = [
 const defaultRoles = [
   {
     name: 'Super Admin',
+    hierarchyLevel: 0,
     permissions: [
       { pageType: 'userManagement', allowedActions: ['create', 'read', 'update', 'delete', 'search'] },
       { pageType: 'roleManagement', allowedActions: ['create', 'read', 'update', 'delete', 'search'] },
@@ -30,6 +31,7 @@ const defaultRoles = [
   },
   {
     name: 'FE Admin',
+    hierarchyLevel: 1,
     permissions: [
       { pageType: 'userManagement', allowedActions: ['create', 'read', 'update', 'delete', 'search'] },
       { pageType: 'clientManagement', allowedActions: ['create', 'read', 'update', 'delete', 'search'] },
@@ -40,6 +42,7 @@ const defaultRoles = [
   },
   {
     name: 'Client Super Admin',
+    hierarchyLevel: 2,
     permissions: [
       { pageType: 'userManagement', allowedActions: ['create', 'read', 'update', 'delete', 'search'] },
       { pageType: 'roleManagement', allowedActions: ['create', 'read', 'update', 'delete', 'search'] },
@@ -51,6 +54,7 @@ const defaultRoles = [
   },
   {
     name: 'Client Admin',
+    hierarchyLevel: 3,
     permissions: [
       { pageType: 'dashboard', allowedActions: ['create', 'read', 'update', 'delete', 'search'] },
     ]
