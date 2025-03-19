@@ -28,6 +28,13 @@ const NavBar = () => {
             </Link>
           </li>
         )}
+        {hasPermission('roleManagement') && (
+          <li>
+            <Link to="/roles" className={isActive('/roles')}>
+              Roles
+            </Link>
+          </li>
+        )}
       </ul>
       <div className="nav-user">
         <span>{user?.name}</span>

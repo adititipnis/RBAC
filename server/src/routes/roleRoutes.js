@@ -2,13 +2,21 @@ const express = require('express')
 const router = express.Router()
 const roleController = require('../controllers/roleController')
 const auth = require('../middleware/auth')
+const checkPermission = require('../middleware/checkPermission')
+const validateRoleManagement = require('../middleware/validateRoleManagement')
 const Role = require('../models/Role')
 
-router.get('/', auth, roleController.getRoles)
-router.post('/', auth, roleController.createRole)
-router.get('/:id', auth, roleController.getRole)
-router.put('/:id', auth, roleController.updateRole)
-router.delete('/:id', auth, roleController.deleteRole)
+// Apply auth middleware to all routes
+router.use(auth)
+
+// Apply permission check for role management
+router.use(checkPermission('roleManagement'))
+
+router.get('/', roleController.getRoles)
+router.post('/', validateRoleManagement, roleController.createRole)
+router.get('/:id', roleController.getRole)
+router.put('/:id', validateRoleManagement, roleController.updateRole)
+router.delete('/:id', validateRoleManagement, roleController.deleteRole)
 
 // Get roles that can be assigned by the current user
 router.get('/available', async (req, res) => {

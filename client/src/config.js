@@ -11,3 +11,5 @@ const configs = {
 }
 
 export const currentConfig = configs[import.meta.env.MODE] || configs.development 
+
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000' 

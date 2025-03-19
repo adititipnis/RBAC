@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import NavBar from '../components/NavBar'
 import Modal from '../components/Modal'
+import userService from '../services/userService'
+import roleService from '../services/roleService'
 import './Users.css'
 
 function Users() {
@@ -21,24 +23,9 @@ function Users() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const headers = {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-
-        const [usersResponse, rolesResponse] = await Promise.all([
-          fetch('http://localhost:3000/users', { headers }),
-          fetch('http://localhost:3000/api/roles', { headers })
-        ])
-
-        if (!usersResponse.ok || !rolesResponse.ok) {
-          const error = await usersResponse.json()
-          throw new Error(error.message || 'Failed to fetch data')
-        }
-
         const [usersData, rolesData] = await Promise.all([
-          usersResponse.json(),
-          rolesResponse.json()
+          userService.getUsers(token),
+          roleService.getRoles(token)
         ])
 
         setUsers(usersData)
@@ -63,21 +50,7 @@ function Users() {
   const handleCreateUser = async (e) => {
     e.preventDefault()
     try {
-      const response = await fetch('http://localhost:3000/users', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newUser)
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Failed to create user')
-      }
-
-      const data = await response.json()
+      const data = await userService.createUser(newUser, token)
       setUsers([...users, data])
       setIsModalOpen(false)
       setNewUser({
@@ -87,7 +60,6 @@ function Users() {
         role: ''
       })
     } catch (err) {
-      console.error('Error creating user:', err)
       setError(err.message)
     }
   }

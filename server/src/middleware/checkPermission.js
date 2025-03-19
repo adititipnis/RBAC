@@ -6,6 +6,11 @@
 const checkPermission = (pageType, action = 'read') => {
   return (req, res, next) => {
     try {
+      // Always allow read actions
+      if (action === 'read') {
+        return next()
+      }
+
       // Get user permissions from JWT token data
       const userPermissions = req.user.permissions
 

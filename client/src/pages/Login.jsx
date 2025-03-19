@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import authService from '../services/authService'
 import './Login.css'
 
 function Login() {
@@ -17,23 +18,7 @@ function Login() {
     setError('')
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || 'Login failed')
-      }
-
-      const data = await response.json()
+      const data = await authService.login(formData)
       login(data)
       navigate('/dashboard')
     } catch (err) {
