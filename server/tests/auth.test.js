@@ -10,6 +10,7 @@ describe('Auth Endpoints', () => {
     // Create test role with specific permissions
     superAdminRole = await Role.create({
       name: 'Super Admin',
+      hierarchyLevel: 0,
       permissions: [
         {
           pageType: 'userManagement',

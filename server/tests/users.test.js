@@ -6,11 +6,13 @@ const Role = require('../src/models/Role')
 describe('User Management', () => {
   let token
   let superAdminRole
+  let clientAdminRole
 
   beforeEach(async () => {
-    // Create test role
+    // Create Super Admin role (level 0)
     superAdminRole = await Role.create({
       name: 'Super Admin',
+      hierarchyLevel: 0,
       permissions: [
         {
           pageType: 'userManagement',
@@ -19,7 +21,19 @@ describe('User Management', () => {
       ]
     })
 
-    // Create admin user
+    // Create Client Admin role (level 3)
+    clientAdminRole = await Role.create({
+      name: 'Client Admin',
+      hierarchyLevel: 3,
+      permissions: [
+        {
+          pageType: 'dashboard',
+          allowedActions: ['create', 'read', 'update', 'delete', 'search']
+        }
+      ]
+    })
+
+    // Create admin user with Super Admin role
     const admin = await User.create({
       name: 'Aditi Tipnis',
       email: 'adititipnis@gmail.com',
@@ -56,7 +70,7 @@ describe('User Management', () => {
         name: 'Test User',
         email: 'test@example.com',
         password: 'password123',
-        role: superAdminRole._id
+        role: clientAdminRole._id  // Use lower level role
       }
 
       const res = await request(app)
@@ -67,16 +81,16 @@ describe('User Management', () => {
       expect(res.statusCode).toBe(201)
       expect(res.body).toHaveProperty('name', newUser.name)
       expect(res.body).toHaveProperty('email', newUser.email)
-      expect(res.body.role).toHaveProperty('name', 'Super Admin')
+      expect(res.body.role).toHaveProperty('name', 'Client Admin')
     })
 
     it('should update existing user', async () => {
-      // Create a user to update
+      // Create a user with Client Admin role
       const user = await User.create({
         name: 'Update Test',
         email: 'update@test.com',
         password: 'password123',
-        role: superAdminRole._id
+        role: clientAdminRole._id  // Use lower level role
       })
 
       const update = {
@@ -93,12 +107,12 @@ describe('User Management', () => {
     })
 
     it('should delete user', async () => {
-      // Create a user to delete
+      // Create a user with Client Admin role
       const user = await User.create({
         name: 'Delete Test',
         email: 'delete@test.com',
         password: 'password123',
-        role: superAdminRole._id
+        role: clientAdminRole._id  // Use lower level role
       })
 
       const res = await request(app)
