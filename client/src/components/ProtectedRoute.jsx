@@ -9,6 +9,8 @@ export const ProtectedRoute = ({ pageType, children }) => {
   }
 
   if (pageType && !hasPermission(pageType)) {
+    console.log('Permission denied for:', pageType)
+    console.log('User permissions:', user.permissions)
     return (
       <div className="error-container">
         <h1>404</h1>

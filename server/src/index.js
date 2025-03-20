@@ -15,6 +15,7 @@ require('./models/User');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const roleRoutes = require('./routes/roleRoutes');
+const clientRoutes = require('./routes/clientRoutes');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use(apiLimiter);
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/api/roles', roleRoutes);
+app.use('/api/clients', clientRoutes);
 
 // Error Handler
 app.use(errorHandler);

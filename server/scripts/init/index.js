@@ -1,6 +1,8 @@
 const mongoose = require('mongoose')
 const PageConfig = require('../../src/models/PageConfig')
 const Role = require('../../src/models/Role')
+const User = require('../../src/models/User')
+const Client = require('../../src/models/Client')
 require('dotenv').config()
 
 // Default pages configuration
@@ -61,6 +63,21 @@ const defaultRoles = [
   },
 ]
 
+const defaultClients = [
+  {
+    name: 'Acme Corporation',
+    code: 'ACME001'
+  },
+  {
+    name: 'TechCorp Solutions',
+    code: 'TECH001'
+  },
+  {
+    name: 'Global Industries',
+    code: 'GLOB001'
+  }
+]
+
 async function initDatabase() {
   try {
     await mongoose.connect(process.env.MONGODB_URI)
@@ -70,13 +87,14 @@ async function initDatabase() {
     console.log('Clearing database...')
     await Promise.all([
       PageConfig.deleteMany({}),
-      Role.deleteMany({})
+      Role.deleteMany({}),
+      User.deleteMany({}),
+      Client.deleteMany({})
     ])
     console.log('Database cleared')
 
     // Drop all indexes from users collection to clean up any legacy indexes
     try {
-      const User = require('../../src/models/User')
       await User.collection.dropIndexes()
     } catch (error) {
       // Ignore error if collection doesn't exist
@@ -90,16 +108,40 @@ async function initDatabase() {
 
     // Initialize roles one by one to handle errors better
     console.log('Initializing roles...')
-    for (const roleData of defaultRoles) {
+    const roles = await Promise.all(defaultRoles.map(async (roleData) => {
       try {
-        await Role.create(roleData)
-        console.log(`Created role: ${roleData.name}`)
+        const role = await Role.create(roleData)
+        console.log(`Created role: ${role.name}`)
+        return role
       } catch (error) {
         console.error(`Error creating role ${roleData.name}:`, error.message)
         throw error
       }
-    }
+    }))
     console.log('Roles initialized')
+
+    // Initialize clients
+    console.log('Initializing clients...')
+    const clients = await Client.insertMany(defaultClients)
+    console.log('Clients initialized')
+
+    // Create a Client Super Admin for testing
+    await User.create({
+      name: 'Client Super Admin',
+      email: 'clientsuperadmin@test.com',
+      password: 'password123',
+      role: roles.find(r => r.name === 'Client Super Admin')._id,
+      client: clients[0]._id // Assign to Acme Corporation
+    })
+
+    // Create a Client Admin for testing
+    await User.create({
+      name: 'Client Admin',
+      email: 'clientadmin@test.com',
+      password: 'password123',
+      role: roles.find(r => r.name === 'Client Admin')._id,
+      client: clients[0]._id // Assign to Acme Corporation
+    })
 
     await mongoose.disconnect()
     console.log('Database initialization completed successfully')
@@ -113,7 +155,8 @@ async function initDatabase() {
 module.exports = {
   initDatabase,
   defaultPages,
-  defaultRoles
+  defaultRoles,
+  defaultClients
 }
 
 // Run both when script is executed directly

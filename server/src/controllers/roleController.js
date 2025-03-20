@@ -4,7 +4,18 @@ class RoleController {
   async getRoles(req, res) {
     try {
       const roles = await Role.find()
-      res.json(roles)
+        .sort({ hierarchyLevel: 1 })
+        .select('name permissions hierarchyLevel')
+      
+      if (req.user.role.hierarchyLevel >= 2) {
+        return res.json(roles.filter(role => 
+          role.hierarchyLevel >= 2 && role.hierarchyLevel > req.user.role.hierarchyLevel
+        ))
+      }
+
+      res.json(roles.filter(role => 
+        role.hierarchyLevel > req.user.role.hierarchyLevel
+      ))
     } catch (error) {
       res.status(500).json({ message: error.message })
     }
@@ -24,9 +35,7 @@ class RoleController {
 
   async createRole(req, res) {
     try {
-      // Check if user can create role at this level
-      const currentUserRole = await Role.findById(req.user.role.id)
-      if (currentUserRole.hierarchyLevel >= req.body.hierarchyLevel) {
+      if (req.user.role.hierarchyLevel >= req.body.hierarchyLevel) {
         return res.status(403).json({ 
           message: 'Cannot create role at same or higher level than your role' 
         })
@@ -41,31 +50,34 @@ class RoleController {
 
   async updateRole(req, res) {
     try {
-      const targetRole = await Role.findById(req.params.id)
-      if (!targetRole) {
-        return res.status(404).json({ message: 'Role not found' })
-      }
+      const { hierarchyLevel } = req.body
+      const currentUserHierarchy = req.user.role.hierarchyLevel
 
-      // Check if user can modify this role
-      const currentUserRole = await Role.findById(req.user.role.id)
-      if (currentUserRole.hierarchyLevel >= targetRole.hierarchyLevel) {
-        return res.status(403).json({ 
-          message: 'Cannot modify role at same or higher level than your role' 
-        })
-      }
-
-      // Prevent changing to higher level
-      if (req.body.hierarchyLevel && currentUserRole.hierarchyLevel >= req.body.hierarchyLevel) {
+      // Validate hierarchy levels in one check
+      if (hierarchyLevel && currentUserHierarchy >= hierarchyLevel) {
         return res.status(403).json({ 
           message: 'Cannot set role to same or higher level than your role' 
         })
       }
 
-      const updatedRole = await Role.findByIdAndUpdate(
-        req.params.id,
+      const updatedRole = await Role.findOneAndUpdate(
+        { 
+          _id: req.params.id,
+          hierarchyLevel: { $gt: currentUserHierarchy } // Only update roles below user's level
+        },
         req.body,
-        { new: true, runValidators: true }
+        { 
+          new: true, 
+          runValidators: true,
+          select: 'name permissions hierarchyLevel'
+        }
       )
+
+      if (!updatedRole) {
+        return res.status(403).json({ 
+          message: 'Cannot modify role at same or higher level than your role' 
+        })
+      }
 
       res.json(updatedRole)
     } catch (error) {
@@ -75,20 +87,17 @@ class RoleController {
 
   async deleteRole(req, res) {
     try {
-      const targetRole = await Role.findById(req.params.id)
-      if (!targetRole) {
-        return res.status(404).json({ message: 'Role not found' })
-      }
+      const deletedRole = await Role.findOneAndDelete({
+        _id: req.params.id,
+        hierarchyLevel: { $gt: req.user.role.hierarchyLevel }
+      })
 
-      // Check if user can delete this role
-      const currentUserRole = await Role.findById(req.user.role.id)
-      if (currentUserRole.hierarchyLevel >= targetRole.hierarchyLevel) {
+      if (!deletedRole) {
         return res.status(403).json({ 
           message: 'Cannot delete role at same or higher level than your role' 
         })
       }
 
-      await Role.findByIdAndDelete(req.params.id)
       res.json({ message: 'Role deleted successfully' })
     } catch (error) {
       res.status(500).json({ message: error.message })

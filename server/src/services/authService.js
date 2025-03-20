@@ -9,6 +9,7 @@ class AuthService {
           path: 'role',
           select: 'name permissions hierarchyLevel'
         })
+        .populate('client', 'name code')
         .maxTimeMS(5000)
 
       if (!user) {
@@ -36,6 +37,11 @@ class AuthService {
           name: user.role.name,
           hierarchyLevel: user.role.hierarchyLevel
         },
+        client: user.client ? {
+          id: user.client._id,
+          name: user.client.name,
+          code: user.client.code
+        } : null,
         permissions
       }
 
