@@ -6,9 +6,19 @@ class UserController {
     try {
       let query = {}
       
-      // Only filter by client for Client Super Admin and Client Admin (level 2 and above)
+      // For Client Super Admin and Client Admin (level 2 and above)
       if (req.user.role.hierarchyLevel >= 2) {
-        query.client = req.user.client.id
+        // Get all roles with higher hierarchy level (lower in rank)
+        const roles = await Role.find({ 
+          hierarchyLevel: { $gt: req.user.role.hierarchyLevel } 
+        })
+        const roleIds = roles.map(r => r._id)
+
+        // Show users from same client with lower roles only
+        query = {
+          client: req.user.client._id,
+          role: { $in: roleIds }
+        }
       }
 
       const users = await User.find(query)
@@ -18,7 +28,6 @@ class UserController {
 
       res.json(users)
     } catch (error) {
-      console.error('Error in listUsers:', error)
       res.status(500).json({ message: error.message })
     }
   }
@@ -41,33 +50,44 @@ class UserController {
 
   async createUser(req, res) {
     try {
-      const { name, email, password, role, client } = req.body
+      const { name, email, password, role } = req.body
+      let { client } = req.body
 
-      // Only enforce client for Client Super Admin and Client Admin
-      if (req.user.role.hierarchyLevel >= 2) {
-        if (client && client !== req.user.client.toString()) {
-          return res.status(403).json({ 
-            message: 'You can only create users for your own client' 
-          })
-        }
-        // Force client to be the same as creator's
-        req.body.client = req.user.client
+      // Get the selected role to check its type
+      const selectedRole = await Role.findById(role)
+      if (!selectedRole) {
+        return res.status(400).json({ message: 'Invalid role' })
       }
 
-      const user = await User.create({
+      // Handle client assignment based on role hierarchy
+      if (selectedRole.name === 'Client Super Admin' || selectedRole.name === 'Client Admin') {
+        // For client-scoped roles, use the creator's client
+        client = req.user.client._id
+      }
+
+      // Create user data object
+      const userData = {
         name,
         email,
         password,
-        role,
-        client: req.body.client
-      })
+        role
+      }
 
-      const userData = await User.findById(user._id)
-        .populate('role', 'name')
+      // Only add client if it's set
+      if (client) {
+        userData.client = client
+      }
+
+      // Create the user
+      const user = await User.create(userData)
+
+      // Return populated user data
+      const populatedUser = await User.findById(user._id)
+        .populate('role', 'name hierarchyLevel')
         .populate('client', 'name code')
         .select('-password')
 
-      res.status(201).json(userData)
+      res.status(201).json(populatedUser)
     } catch (error) {
       res.status(400).json({ message: error.message })
     }

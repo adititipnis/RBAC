@@ -92,15 +92,25 @@ function Users() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
+      // Prepare user data - ensure client is just the ID
+      const userData = {
+        name: newUser.name,
+        email: newUser.email,
+        password: newUser.password || undefined,
+        role: newUser.role,
+        // Only include client if it's set and ensure it's just the ID string
+        ...(newUser.client && { client: newUser.client })
+      }
+
+      console.log('Submitting user data:', userData) // Debug log
+
       if (editingUser) {
-        // Update existing user
         const data = await userService.updateUser(
           editingUser._id,
-          { ...newUser, password: newUser.password || undefined },
+          userData,
           token
         )
         
-        // If the user has a client ID but not the full client object, fetch the client details
         const updatedUser = {
           ...data,
           client: data.client && typeof data.client === 'string' 
@@ -112,8 +122,7 @@ function Users() {
           user._id === editingUser._id ? updatedUser : user
         ))
       } else {
-        // Create new user
-        const data = await userService.createUser(newUser, token)
+        const data = await userService.createUser(userData, token)
         setUsers([...users, data])
       }
 
@@ -127,21 +136,24 @@ function Users() {
       })
       setEditingUser(null)
     } catch (err) {
+      console.error('Error submitting user:', err) // Debug log
       setError(err.message)
     }
   }
 
-  // Add a function to determine if client field should be shown
+  // Update shouldShowClientField to only show for System Admin and Frontend Admin
   const shouldShowClientField = () => {
     if (editingUser) {
       // When editing, check the current role of the user being edited
       const roleId = newUser.role
       const role = roles.find(r => r._id === roleId)
       return role && isClientRole(role.name)
+        ? false // Don't show client dropdown for client-scoped roles
+        : true  // Show for System Admin and Frontend Admin
     } else {
       // For new users, check the selected role
       const selectedRole = roles.find(r => r._id === newUser.role)
-      return selectedRole && isClientRole(selectedRole.name)
+      return selectedRole && !isClientRole(selectedRole.name)
     }
   }
 
@@ -288,7 +300,6 @@ function Users() {
               </select>
             </div>
 
-            {/* Update the client field visibility check */}
             {shouldShowClientField() && (
               <div className="form-group">
                 <label htmlFor="client">Client</label>
@@ -297,7 +308,7 @@ function Users() {
                   value={newUser.client}
                   onChange={(e) => setNewUser({ ...newUser, client: e.target.value })}
                   className="select-single"
-                  required
+                  required={shouldShowClientField()} // Only required if field is shown
                 >
                   <option value="">Select a client</option>
                   {clients.map(client => (
