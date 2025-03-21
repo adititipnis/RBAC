@@ -10,7 +10,7 @@ function RoleManagement() {
   const [roles, setRoles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const { user, token } = useAuth()
+  const { user, token, hasPermission } = useAuth()
   const [editingStates, setEditingStates] = useState({})
   const [toast, setToast] = useState(null)
   const [savingRoles, setSavingRoles] = useState({})
@@ -25,6 +25,8 @@ function RoleManagement() {
     'dashboard',
     'report'
   ]
+
+  const canUpdateRoles = hasPermission('roleManagement', 'update')
 
   useEffect(() => {
     fetchRoles()
@@ -54,6 +56,7 @@ function RoleManagement() {
   }
 
   const handlePermissionChange = (roleId, page, action) => {
+    if (!canUpdateRoles) return // Prevent changes if no update permission
     setEditingStates(prev => {
       const role = { ...prev[roleId] }
       const updatedPermissions = [...role.permissions]
@@ -150,6 +153,7 @@ function RoleManagement() {
                       type="checkbox"
                       checked={pagePermissions.includes(action)}
                       onChange={() => handlePermissionChange(role._id, page, action)}
+                      disabled={!canUpdateRoles}
                     />
                   </td>
                 ))}
@@ -185,15 +189,17 @@ function RoleManagement() {
               <div className="role-permissions">
                 {renderPermissionsTable(role)}
               </div>
-              <div className="role-actions">
-                <button 
-                  className={`save-button ${savingRoles[role._id] ? 'saving' : ''}`}
-                  onClick={() => handleSave(role._id)}
-                  disabled={savingRoles[role._id]}
-                >
-                  {savingRoles[role._id] ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
+              {canUpdateRoles && (
+                <div className="role-actions">
+                  <button 
+                    className={`save-button ${savingRoles[role._id] ? 'saving' : ''}`}
+                    onClick={() => handleSave(role._id)}
+                    disabled={savingRoles[role._id]}
+                  >
+                    {savingRoles[role._id] ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

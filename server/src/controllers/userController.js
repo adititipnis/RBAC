@@ -75,16 +75,15 @@ class UserController {
 
   async updateUser(req, res) {
     try {
-      const updates = { ...req.body }
-      delete updates.password // Don't allow password updates through this endpoint
-
       const user = await User.findByIdAndUpdate(
         req.params.id,
-        updates,
-        { new: true }
-      )
-        .populate('role', 'name')
-        .select('-password')
+        req.body,
+        { 
+          new: true,
+          runValidators: true 
+        }
+      ).populate('role')
+        .populate('client')
 
       if (!user) {
         return res.status(404).json({ message: 'User not found' })

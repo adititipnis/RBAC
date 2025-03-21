@@ -105,6 +105,16 @@
   border-color: #646cff;
 }
 
+.checkbox-cell input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #ddd;
+}
+
+.checkbox-cell input[type="checkbox"]:disabled:checked {
+  background-color: #a8a8ff;
+}
+
 .role-actions {
   display: flex;
   justify-content: flex-end;

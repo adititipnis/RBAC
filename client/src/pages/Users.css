@@ -177,4 +177,44 @@ select[multiple] {
   color: #333;
   background-color: white;
   padding: 0.5rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-button,
+.delete-button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-button {
+  background: #646cff;
+  color: white;
+  border: none;
+}
+
+.delete-button {
+  background: white;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+}
+
+.edit-button:hover {
+  background: #535bf2;
+}
+
+.delete-button:hover {
+  background: #fee2e2;
+}
+
+.edit-button:disabled,
+.delete-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 } 

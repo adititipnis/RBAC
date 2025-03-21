@@ -15,6 +15,7 @@ function Users() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState(null)
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
@@ -22,8 +23,11 @@ function Users() {
     role: '',
     client: ''
   })
-  const { user, token } = useAuth()
-  const showClientColumn = user.role.hierarchyLevel < 2  // Only for levels 0 and 1
+  const { user, token, hasPermission } = useAuth()
+  const showClientColumn = user.role.hierarchyLevel < 2 || users.some(u => u.client)
+  const canCreateUser = hasPermission('userManagement', 'create')
+  const canEditUser = hasPermission('userManagement', 'update')
+  const canDeleteUser = hasPermission('userManagement', 'delete')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,17 +64,59 @@ function Users() {
 
   const selectedRole = roles.find(r => r._id === newUser.role)
 
-  const handleCreateUser = async (e) => {
+  const handleEdit = (user) => {
+    setEditingUser(user)
+    setNewUser({
+      name: user.name,
+      email: user.email,
+      password: '',
+      role: user.role._id,
+      client: user.client?._id || ''
+    })
+    setIsModalOpen(true)
+  }
+
+  const handleDelete = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) {
+      return
+    }
+
+    try {
+      await userService.deleteUser(userId, token)
+      setUsers(users.filter(user => user._id !== userId))
+    } catch (err) {
+      setError(err.message)
+    }
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      // Validate client selection for client roles
-      if (selectedRole && isClientRole(selectedRole.name) && !newUser.client) {
-        setError('Client selection is required for this role')
-        return
+      if (editingUser) {
+        // Update existing user
+        const data = await userService.updateUser(
+          editingUser._id,
+          { ...newUser, password: newUser.password || undefined },
+          token
+        )
+        
+        // If the user has a client ID but not the full client object, fetch the client details
+        const updatedUser = {
+          ...data,
+          client: data.client && typeof data.client === 'string' 
+            ? clients.find(c => c._id === data.client)
+            : data.client
+        }
+
+        setUsers(users.map(user => 
+          user._id === editingUser._id ? updatedUser : user
+        ))
+      } else {
+        // Create new user
+        const data = await userService.createUser(newUser, token)
+        setUsers([...users, data])
       }
 
-      const data = await userService.createUser(newUser, token)
-      setUsers([...users, data])
       setIsModalOpen(false)
       setNewUser({
         name: '',
@@ -79,8 +125,23 @@ function Users() {
         role: '',
         client: ''
       })
+      setEditingUser(null)
     } catch (err) {
       setError(err.message)
+    }
+  }
+
+  // Add a function to determine if client field should be shown
+  const shouldShowClientField = () => {
+    if (editingUser) {
+      // When editing, check the current role of the user being edited
+      const roleId = newUser.role
+      const role = roles.find(r => r._id === roleId)
+      return role && isClientRole(role.name)
+    } else {
+      // For new users, check the selected role
+      const selectedRole = roles.find(r => r._id === newUser.role)
+      return selectedRole && isClientRole(selectedRole.name)
     }
   }
 
@@ -98,9 +159,11 @@ function Users() {
               <h2>User Management</h2>
               <p>Manage system users and their roles</p>
             </div>
-            <button className="create-button" onClick={() => setIsModalOpen(true)}>
-              Create User
-            </button>
+            {canCreateUser && (
+              <button className="create-button" onClick={() => setIsModalOpen(true)}>
+                Create User
+              </button>
+            )}
           </div>
         </div>
         <div className="content-card">
@@ -111,6 +174,7 @@ function Users() {
                 <th>Email</th>
                 <th>Role</th>
                 {showClientColumn && <th>Client</th>}
+                {(canEditUser || canDeleteUser) && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -122,6 +186,26 @@ function Users() {
                   {showClientColumn && (
                     <td>{user.client ? user.client.name : '-'}</td>
                   )}
+                  {(canEditUser || canDeleteUser) && (
+                    <td className="action-buttons">
+                      {canEditUser && (
+                        <button 
+                          className="edit-button"
+                          onClick={() => handleEdit(user)}
+                        >
+                          Edit
+                        </button>
+                      )}
+                      {canDeleteUser && (
+                        <button 
+                          className="delete-button"
+                          onClick={() => handleDelete(user._id)}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -129,98 +213,127 @@ function Users() {
         </div>
       </div>
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Create New User"
-      >
-        <form onSubmit={handleCreateUser} className="create-user-form">
-          <div className="form-group">
-            <label htmlFor="name">Name</label>
-            <input
-              type="text"
-              id="name"
-              value={newUser.name}
-              onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              value={newUser.email}
-              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={newUser.password}
-              onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="role">Role</label>
-            <select
-              id="role"
-              value={newUser.role}
-              onChange={(e) => {
-                setNewUser({ 
-                  ...newUser, 
-                  role: e.target.value,
-                  // Clear client selection when role changes
-                  client: '' 
-                })
-              }}
-              className="select-single"
-              required
-            >
-              <option value="">Select a role</option>
-              {availableRoles.map(role => (
-                <option key={role._id} value={role._id}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Show client selection only for client roles */}
-          {selectedRole && isClientRole(selectedRole.name) && (
+      {/* Only render modal if user has create permission */}
+      {canCreateUser && (
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setEditingUser(null)
+            setNewUser({
+              name: '',
+              email: '',
+              password: '',
+              role: '',
+              client: ''
+            })
+          }}
+          title={editingUser ? 'Edit User' : 'Create New User'}
+        >
+          <form onSubmit={handleSubmit} className="create-user-form">
             <div className="form-group">
-              <label htmlFor="client">Client</label>
+              <label htmlFor="name">Name</label>
+              <input
+                type="text"
+                id="name"
+                value={newUser.name}
+                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                value={newUser.email}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="password">
+                Password {editingUser && '(leave blank to keep current)'}
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                required={!editingUser} // Only required for new users
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="role">Role</label>
               <select
-                id="client"
-                value={newUser.client}
-                onChange={(e) => setNewUser({ ...newUser, client: e.target.value })}
+                id="role"
+                value={newUser.role}
+                onChange={(e) => {
+                  setNewUser({ 
+                    ...newUser, 
+                    role: e.target.value,
+                    // Clear client selection when role changes
+                    client: '' 
+                  })
+                }}
                 className="select-single"
                 required
               >
-                <option value="">Select a client</option>
-                {clients.map(client => (
-                  <option key={client._id} value={client._id}>
-                    {client.name}
+                <option value="">Select a role</option>
+                {availableRoles.map(role => (
+                  <option key={role._id} value={role._id}>
+                    {role.name}
                   </option>
                 ))}
               </select>
             </div>
-          )}
 
-          <div className="form-actions">
-            <button type="button" className="cancel-button" onClick={() => setIsModalOpen(false)}>
-              Cancel
-            </button>
-            <button type="submit" className="submit-button">
-              Create User
-            </button>
-          </div>
-        </form>
-      </Modal>
+            {/* Update the client field visibility check */}
+            {shouldShowClientField() && (
+              <div className="form-group">
+                <label htmlFor="client">Client</label>
+                <select
+                  id="client"
+                  value={newUser.client}
+                  onChange={(e) => setNewUser({ ...newUser, client: e.target.value })}
+                  className="select-single"
+                  required
+                >
+                  <option value="">Select a client</option>
+                  {clients.map(client => (
+                    <option key={client._id} value={client._id}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="form-actions">
+              <button 
+                type="button" 
+                className="cancel-button" 
+                onClick={() => {
+                  setIsModalOpen(false)
+                  setEditingUser(null)
+                  setNewUser({
+                    name: '',
+                    email: '',
+                    password: '',
+                    role: '',
+                    client: ''
+                  })
+                }}
+              >
+                Cancel
+              </button>
+              <button type="submit" className="submit-button">
+                {editingUser ? 'Update User' : 'Create User'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   )
 }
