@@ -16,9 +16,40 @@ class AuthService {
         throw new Error('Invalid email or password')
       }
 
+      // Check if user is active
+      if (!user.active) {
+        throw new Error('Account is inactive')
+      }
+
+      // Check if account is locked
+      if (user.lockUntil && user.lockUntil > Date.now()) {
+        throw new Error('Account is temporarily locked. Please try again later')
+      }
+
       const isMatch = await user.comparePassword(password)
       if (!isMatch) {
+        // Increment failed attempts
+        user.failedLoginAttempts += 1
+        
+        // Lock account after 5 failed attempts
+        if (user.failedLoginAttempts >= 5) {
+          user.lockUntil = Date.now() + (15 * 60 * 1000) // 15 minutes
+        }
+        
+        await user.save()
         throw new Error('Invalid email or password')
+      }
+
+      // Reset failed attempts on successful login
+      if (user.failedLoginAttempts > 0) {
+        user.failedLoginAttempts = 0
+        user.lockUntil = null
+        await user.save()
+      }
+
+      // Check if client exists and is active (for client-related roles)
+      if (user.client && (!user.client.active)) {
+        throw new Error('Client account is inactive')
       }
 
       const permissions = {}
