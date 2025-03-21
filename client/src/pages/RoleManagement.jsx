@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import NavBar from '../components/NavBar'
 import Toast from '../components/Toast'
 import roleService from '../services/roleService'
+import Loader from '../components/Loader'
 import './RoleManagement.css'
 
 function RoleManagement() {
@@ -160,7 +161,7 @@ function RoleManagement() {
     )
   }
 
-  if (loading) return <div>Loading...</div>
+  if (loading) return <Loader />
   if (error) return <div>Error: {error}</div>
 
   return (

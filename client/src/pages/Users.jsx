@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import NavBar from '../components/NavBar'
 import Modal from '../components/Modal'
+import Loader from '../components/Loader'
 import userService from '../services/userService'
 import roleService from '../services/roleService'
 import clientService from '../services/clientService'
@@ -84,7 +85,7 @@ function Users() {
   }
 
   if (!token) return <div>Please log in</div>
-  if (loading) return <div>Loading...</div>
+  if (loading) return <Loader />
   if (error) return <div>Error: {error}</div>
 
   return (
