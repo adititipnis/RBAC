@@ -16,11 +16,6 @@ class AuthService {
         throw new Error('Invalid email or password')
       }
 
-      // Check if user is active
-      if (!user.active) {
-        throw new Error('Account is inactive')
-      }
-
       // Check if account is locked
       if (user.lockUntil && user.lockUntil > Date.now()) {
         throw new Error('Account is temporarily locked. Please try again later')
@@ -45,11 +40,6 @@ class AuthService {
         user.failedLoginAttempts = 0
         user.lockUntil = null
         await user.save()
-      }
-
-      // Check if client exists and is active (for client-related roles)
-      if (user.client && (!user.client.active)) {
-        throw new Error('Client account is inactive')
       }
 
       const permissions = {}

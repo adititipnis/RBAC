@@ -37,10 +37,6 @@ const userSchema = new mongoose.Schema({
       return this.role && ['Client Super Admin', 'Client Admin'].includes(this.role.name)
     }
   },
-  active: {
-    type: Boolean,
-    default: true
-  },
   failedLoginAttempts: { type: Number, default: 0 },
   lockUntil: { type: Date },
   lastPasswordChange: {
