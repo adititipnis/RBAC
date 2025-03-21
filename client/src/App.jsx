@@ -5,6 +5,8 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Users from './pages/Users'
 import RoleManagement from './pages/RoleManagement'
+import Diagnostics from './pages/Diagnostics'
+import Reports from './pages/Reports'
 import './App.css'
 
 function App() {
@@ -26,6 +28,22 @@ function App() {
             element={
               <ProtectedRoute pageType="roleManagement">
                 <RoleManagement />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/diagnostics" 
+            element={
+              <ProtectedRoute pageType="diagnostic">
+                <Diagnostics />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/reports" 
+            element={
+              <ProtectedRoute pageType="report">
+                <Reports />
               </ProtectedRoute>
             } 
           />
