@@ -6,6 +6,7 @@ import Loader from '../components/Loader'
 import userService from '../services/userService'
 import roleService from '../services/roleService'
 import clientService from '../services/clientService'
+import CreateUserModal from '../components/CreateUserModal'
 import './Users.css'
 
 function Users() {
@@ -57,12 +58,6 @@ function Users() {
   const availableRoles = roles.filter(role => 
     role.hierarchyLevel > user.role.hierarchyLevel
   )
-
-  const isClientRole = (roleName) => {
-    return ['Client Super Admin', 'Client Admin'].includes(roleName)
-  }
-
-  const selectedRole = roles.find(r => r._id === newUser.role)
 
   const handleEdit = (user) => {
     setEditingUser(user)
@@ -141,20 +136,16 @@ function Users() {
     }
   }
 
-  // Update shouldShowClientField to only show for System Admin and Frontend Admin
-  const shouldShowClientField = () => {
-    if (editingUser) {
-      // When editing, check the current role of the user being edited
-      const roleId = newUser.role
-      const role = roles.find(r => r._id === roleId)
-      return role && isClientRole(role.name)
-        ? false // Don't show client dropdown for client-scoped roles
-        : true  // Show for System Admin and Frontend Admin
-    } else {
-      // For new users, check the selected role
-      const selectedRole = roles.find(r => r._id === newUser.role)
-      return selectedRole && !isClientRole(selectedRole.name)
-    }
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setEditingUser(null)
+    setNewUser({
+      name: '',
+      email: '',
+      password: '',
+      role: '',
+      client: ''
+    })
   }
 
   if (!token) return <div>Please log in</div>
@@ -227,123 +218,16 @@ function Users() {
 
       {/* Only render modal if user has create permission */}
       {canCreateUser && (
-        <Modal
+        <CreateUserModal
           isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false)
-            setEditingUser(null)
-            setNewUser({
-              name: '',
-              email: '',
-              password: '',
-              role: '',
-              client: ''
-            })
-          }}
-          title={editingUser ? 'Edit User' : 'Create New User'}
-        >
-          <form onSubmit={handleSubmit} className="create-user-form">
-            <div className="form-group">
-              <label htmlFor="name">Name</label>
-              <input
-                type="text"
-                id="name"
-                value={newUser.name}
-                onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                type="email"
-                id="email"
-                value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="password">
-                Password {editingUser && '(leave blank to keep current)'}
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={newUser.password}
-                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                required={!editingUser} // Only required for new users
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="role">Role</label>
-              <select
-                id="role"
-                value={newUser.role}
-                onChange={(e) => {
-                  setNewUser({ 
-                    ...newUser, 
-                    role: e.target.value,
-                    // Clear client selection when role changes
-                    client: '' 
-                  })
-                }}
-                className="select-single"
-                required
-              >
-                <option value="">Select a role</option>
-                {availableRoles.map(role => (
-                  <option key={role._id} value={role._id}>
-                    {role.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {shouldShowClientField() && (
-              <div className="form-group">
-                <label htmlFor="client">Client</label>
-                <select
-                  id="client"
-                  value={newUser.client}
-                  onChange={(e) => setNewUser({ ...newUser, client: e.target.value })}
-                  className="select-single"
-                  required={shouldShowClientField()} // Only required if field is shown
-                >
-                  <option value="">Select a client</option>
-                  {clients.map(client => (
-                    <option key={client._id} value={client._id}>
-                      {client.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div className="form-actions">
-              <button 
-                type="button" 
-                className="cancel-button" 
-                onClick={() => {
-                  setIsModalOpen(false)
-                  setEditingUser(null)
-                  setNewUser({
-                    name: '',
-                    email: '',
-                    password: '',
-                    role: '',
-                    client: ''
-                  })
-                }}
-              >
-                Cancel
-              </button>
-              <button type="submit" className="submit-button">
-                {editingUser ? 'Update User' : 'Create User'}
-              </button>
-            </div>
-          </form>
-        </Modal>
+          onClose={handleCloseModal}
+          onSubmit={handleSubmit}
+          editingUser={editingUser}
+          newUser={newUser}
+          setNewUser={setNewUser}
+          roles={roles}
+          clients={clients}
+        />
       )}
     </div>
   )
