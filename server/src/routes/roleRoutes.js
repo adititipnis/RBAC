@@ -5,6 +5,7 @@ const auth = require('../middleware/auth')
 const checkPermission = require('../middleware/checkPermission')
 const validateRoleManagement = require('../middleware/validateRoleManagement')
 const Role = require('../models/Role')
+const { errorResponse } = require('../utils/errorResponse')
 
 // Apply auth middleware to all routes
 router.use(auth)
@@ -12,13 +13,7 @@ router.use(auth)
 // Apply permission check for role management
 router.use(checkPermission('roleManagement'))
 
-router.get('/', roleController.getRoles)
-router.post('/', validateRoleManagement, roleController.createRole)
-router.get('/:id', roleController.getRole)
-router.put('/:id', validateRoleManagement, roleController.updateRole)
-router.delete('/:id', validateRoleManagement, roleController.deleteRole)
-
-// Get roles that can be assigned by the current user
+// Specific routes must come before parameter routes
 router.get('/available', async (req, res) => {
   try {
     const currentUserRole = await Role.findById(req.user.role.id)
@@ -26,13 +21,21 @@ router.get('/available', async (req, res) => {
     // Find all roles with higher hierarchy level
     const availableRoles = await Role.find({
       hierarchyLevel: { $gt: currentUserRole.hierarchyLevel }
-    }).select('name _id')
+    })
+    .setOptions({ currentUser: req.user })
+    .select('name _id')
 
     res.json(availableRoles)
   } catch (error) {
-    console.error('Error fetching available roles:', error)
-    res.status(500).json({ message: error.message })
+    errorResponse(res, 'SERVER_ERROR', 'Error fetching available roles', error.message)
   }
 })
+
+// Standard routes
+router.get('/', roleController.listRoles)
+router.post('/', validateRoleManagement, roleController.createRole)
+router.get('/:id', roleController.getRole)
+router.put('/:id', validateRoleManagement, roleController.updateRole)
+router.delete('/:id', validateRoleManagement, roleController.deleteRole)
 
 module.exports = router 

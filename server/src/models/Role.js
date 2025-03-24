@@ -102,6 +102,58 @@ roleSchema.statics.getManageableRoles = function(roleHierarchyLevel) {
   return this.find({ hierarchyLevel: { $gt: roleHierarchyLevel } })
 }
 
+// Add query middleware for find operations
+roleSchema.pre(['find', 'findOne', 'findById'], function(next) {
+  // Access the options (this is where we'll pass the current user)
+  const user = this.getOptions().currentUser;
+  
+  // If no user provided or user is super admin, don't apply filters
+  if (!user || user.role.hierarchyLevel === 0) {
+    return next();
+  }
+  
+  // Users can only see roles below their level
+  this.where('hierarchyLevel').gt(user.role.hierarchyLevel);
+  
+  next();
+});
+
+// Add middleware for update operations
+roleSchema.pre(['updateOne', 'findOneAndUpdate'], function(next) {
+  const user = this.getOptions().currentUser;
+  
+  if (!user) return next();
+  
+  // Users can only update roles below their level
+  this.where('hierarchyLevel').gt(user.role.hierarchyLevel);
+  
+  // Prevent changing hierarchy level to be equal or lower than user's level
+  const update = this.getUpdate();
+  if (update && update.$set && typeof update.$set.hierarchyLevel !== 'undefined') {
+    if (update.$set.hierarchyLevel <= user.role.hierarchyLevel) {
+      const error = new Error('Cannot set role hierarchy level to be equal or higher than your own');
+      return next(error);
+    }
+  }
+  
+  next();
+});
+
+// Add middleware for delete operations 
+roleSchema.pre(['deleteOne', 'findOneAndDelete'], function(next) {
+  const user = this.getOptions().currentUser;
+  
+  if (!user) return next();
+  
+  // Users can only delete roles below their level
+  this.where('hierarchyLevel').gt(user.role.hierarchyLevel);
+  
+  // Prevent deleting critical system roles
+  this.where('name').nin(['Super Admin', 'FE Admin', 'Client Super Admin']);
+  
+  next();
+});
+
 const Role = mongoose.model('Role', roleSchema)
 
 module.exports = Role 

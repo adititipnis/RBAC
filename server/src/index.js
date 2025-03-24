@@ -36,13 +36,18 @@ app.use(errorHandler);
 // Only connect to MongoDB if not in test environment
 if (process.env.NODE_ENV !== 'test') {
   mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('MongoDB connection error:', err));
-
-  const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+    .then(() => {
+      console.log('Connected to MongoDB');
+      // Start the server
+      const PORT = process.env.PORT || 3000;
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    })
+    .catch(err => {
+      console.error('MongoDB connection error:', err);
+      process.exit(1);
+    });
 }
 
 module.exports = app; 

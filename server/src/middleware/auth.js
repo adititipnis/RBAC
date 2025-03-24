@@ -1,12 +1,13 @@
 const jwt = require('jsonwebtoken')
 const Role = require('../models/Role')
+const { errorResponse, ERROR_TYPES } = require('../utils/errorResponse')
 
 const auth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '')
     
     if (!token) {
-      return res.status(401).json({ message: 'Authentication required' })
+      return errorResponse(res, ERROR_TYPES.AUTHORIZATION, 'Access denied. No token provided')
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
@@ -45,7 +46,7 @@ const auth = async (req, res, next) => {
     
     next()
   } catch (error) {
-    res.status(401).json({ message: 'Invalid token' })
+    return errorResponse(res, ERROR_TYPES.AUTHORIZATION, 'Invalid token', error.message)
   }
 }
 

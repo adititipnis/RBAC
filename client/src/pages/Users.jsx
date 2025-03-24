@@ -79,8 +79,9 @@ function Users() {
     try {
       await userService.deleteUser(userId, token)
       setUsers(users.filter(user => user._id !== userId))
-    } catch (err) {
-      setError(err.message)
+    } catch (error) {
+      setError(error.message)
+      // Optional: Show a toast or notification
     }
   }
 
@@ -130,9 +131,10 @@ function Users() {
         client: ''
       })
       setEditingUser(null)
-    } catch (err) {
-      console.error('Error submitting user:', err) // Debug log
-      setError(err.message)
+    } catch (error) {
+      console.error('Error submitting user:', error.message)
+      setError(error.message)
+      // Optional: Show an error in the form
     }
   }
 

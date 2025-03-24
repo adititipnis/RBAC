@@ -5,37 +5,78 @@ class RoleService {
     this.baseUrl = `${API_BASE_URL}/api/roles`
   }
 
+  // Standard error handler
+  handleApiError(error) {
+    const errorMessage = 
+      error.response?.data?.error?.message || 
+      error.response?.data?.message || 
+      error.message || 
+      'An unknown error occurred';
+    
+    console.error('API Error:', errorMessage);
+    throw new Error(errorMessage);
+  }
+
   async getRoles(token) {
-    const response = await fetch(this.baseUrl, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+    try {
+      const response = await fetch(this.baseUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Failed to fetch roles');
       }
-    })
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch roles')
+      return response.json()
+    } catch (error) {
+      this.handleApiError(error);
     }
+  }
 
-    return response.json()
+  async getRole(roleId, token) {
+    try {
+      const response = await fetch(`${this.baseUrl}/${roleId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Failed to fetch role');
+      }
+
+      return response.json()
+    } catch (error) {
+      this.handleApiError(error);
+    }
   }
 
   async updateRole(roleId, roleData, token) {
-    const response = await fetch(`${this.baseUrl}/${roleId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(roleData)
-    })
+    try {
+      const response = await fetch(`${this.baseUrl}/${roleId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(roleData)
+      })
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message)
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Failed to update role');
+      }
+
+      return response.json()
+    } catch (error) {
+      this.handleApiError(error);
     }
-
-    return response.json()
   }
 }
 

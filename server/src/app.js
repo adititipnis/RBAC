@@ -4,6 +4,8 @@ const cors = require('cors')
 const authRoutes = require('./routes/authRoutes')
 const userRoutes = require('./routes/userRoutes')
 const roleRoutes = require('./routes/roleRoutes')
+const clientRoutes = require('./routes/clientRoutes')
+const { errorResponse } = require('./utils/errorResponse')
 
 const app = express()
 
@@ -22,10 +24,17 @@ app.use(express.json())
 app.use('/auth', authRoutes)
 app.use('/users', userRoutes)
 app.use('/roles', roleRoutes)
+app.use('/clients', clientRoutes)
 
 // Error handling
 app.use((err, req, res, next) => {
-  res.status(500).json({ message: 'Something broke!' })
+  console.error('Unhandled error:', err)
+  errorResponse(
+    res, 
+    'SERVER_ERROR', 
+    'An unexpected error occurred', 
+    err.message
+  )
 })
 
 module.exports = app 

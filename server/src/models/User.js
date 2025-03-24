@@ -75,4 +75,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   }
 }
 
+// Password regex for minimum 8 chars, at least one letter and one number
+const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
+
 module.exports = mongoose.model('User', userSchema) 
