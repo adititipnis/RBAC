@@ -1,5 +1,6 @@
 const User = require('../models/User')
 const Role = require('../models/Role')
+const { getClientId } = require('../utils/clientUtils')
 
 class UserController {
   async listUsers(req, res) {
@@ -14,16 +15,15 @@ class UserController {
         })
         const roleIds = roles.map(r => r._id)
 
-        // Check if client exists
-        if (!req.user.client) {
-          return res.status(400).json({ 
-            message: 'Client not found for user with client-scoped role' 
-          });
+        // Get client ID consistently
+        const clientId = getClientId(req.user.client)
+        
+        if (!clientId) {
+          return res.status(400).json({
+            message: 'Client not found for user with client-scoped role'
+          })
         }
         
-        // Get the client ID - try both id and _id properties
-        const clientId = req.user.client.id || req.user.client._id;
-
         // Show users from same client with lower roles only
         query = {
           client: clientId,
@@ -82,10 +82,10 @@ class UserController {
       if (selectedRole.hierarchyLevel >= 2) {
         if (!client && req.user && req.user.client) {
           // For client-scoped roles without explicit client, use the creator's client
-          userData.client = req.user.client._id
+          userData.client = getClientId(req.user.client)
         } else if (client) {
           // Use the provided client
-          userData.client = client
+          userData.client = client;
         } else {
           return res.status(400).json({ 
             message: 'Client is required for client-scoped roles' 
@@ -98,7 +98,7 @@ class UserController {
 
       // Set createdBy if user is authenticated
       if (req.user) {
-        userData.createdBy = req.user._id
+        userData.createdBy = req.user.id || req.user._id;
       }
 
       // Create the user

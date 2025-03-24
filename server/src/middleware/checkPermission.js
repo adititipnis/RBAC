@@ -1,3 +1,5 @@
+const { errorResponse } = require('../utils/errorResponse')
+
 /**
  * Middleware to check if user has required permission for a page
  * @param {string} pageType - The type of page to check permissions for
@@ -6,27 +8,27 @@
 const checkPermission = (pageType, action = 'read') => {
   return (req, res, next) => {
     try {
-      // Always allow read actions
-      if (action === 'read') {
-        return next()
+      // Check if user exists and has permissions
+      if (!req.user || !req.user.permissions) {
+        return errorResponse(res, 'AUTHORIZATION', 'Insufficient permissions')
       }
-
-      // Get user permissions from JWT token data
-      const userPermissions = req.user.permissions
-
-      // Check if user has permission for this page
-      const pagePermissions = userPermissions[pageType]
+      
+      // Get permissions for this page type
+      const pagePermissions = req.user.permissions[pageType]
+      
+      // Check if user has the required permission
       if (!pagePermissions || !pagePermissions.includes(action)) {
-        return res.status(403).json({
-          message: `Access denied. Missing ${action} permission for ${pageType}`
-        })
+        return errorResponse(
+          res,
+          'AUTHORIZATION',
+          `You don't have permission to ${action} ${pageType}`
+        )
       }
-
+      
+      // If permission exists and user has the required action
       next()
     } catch (error) {
-      res.status(403).json({
-        message: 'Access denied. Invalid permissions'
-      })
+      errorResponse(res, 'SERVER_ERROR', 'Permission check failed', error.message)
     }
   }
 }
