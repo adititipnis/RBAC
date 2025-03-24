@@ -1,4 +1,5 @@
 import Modal from './Modal'
+import { useAuth } from '../context/AuthContext'
 
 function CreateUserModal({
   isOpen,
@@ -10,14 +11,20 @@ function CreateUserModal({
   roles,
   clients
 }) {
-  // Filter available roles based on editing context
+  // Get the current user from context instead of props
+  const { user } = useAuth()
+  
+  // Filter available roles based on current user's hierarchy level
   const availableRoles = roles.filter(role => {
+    // Get the current user's hierarchy level from the auth context
+    const currentUserHierarchyLevel = user?.role?.hierarchyLevel || 0;
+    
     if (editingUser) {
-      // When editing, show the user's current role and roles below their hierarchy
-      return role._id === newUser.role || role.hierarchyLevel > 1
+      // When editing, show the user's current role and roles with higher hierarchy level
+      return role._id === newUser.role || role.hierarchyLevel > currentUserHierarchyLevel;
     }
-    // When creating, only show roles below hierarchy level 1
-    return role.hierarchyLevel > 1
+    // When creating, only show roles with higher hierarchy level than current user
+    return role.hierarchyLevel > currentUserHierarchyLevel;
   })
 
   // Helper function to determine if client field should be shown

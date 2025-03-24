@@ -14,9 +14,19 @@ class UserController {
         })
         const roleIds = roles.map(r => r._id)
 
+        // Check if client exists
+        if (!req.user.client) {
+          return res.status(400).json({ 
+            message: 'Client not found for user with client-scoped role' 
+          });
+        }
+        
+        // Get the client ID - try both id and _id properties
+        const clientId = req.user.client.id || req.user.client._id;
+
         // Show users from same client with lower roles only
         query = {
-          client: req.user.client._id,
+          client: clientId,
           role: { $in: roleIds }
         }
       }
@@ -53,16 +63,10 @@ class UserController {
       const { name, email, password, role } = req.body
       let { client } = req.body
 
-      // Get the selected role to check its type
+      // Get the selected role to check its hierarchy level
       const selectedRole = await Role.findById(role)
       if (!selectedRole) {
         return res.status(400).json({ message: 'Invalid role' })
-      }
-
-      // Handle client assignment based on role hierarchy
-      if (selectedRole.name === 'Client Super Admin' || selectedRole.name === 'Client Admin') {
-        // For client-scoped roles, use the creator's client
-        client = req.user.client._id
       }
 
       // Create user data object
@@ -73,9 +77,28 @@ class UserController {
         role
       }
 
-      // Only add client if it's set
-      if (client) {
+      // Handle client assignment based on role hierarchy level
+      // Client-scoped roles have hierarchy level >= 2
+      if (selectedRole.hierarchyLevel >= 2) {
+        if (!client && req.user && req.user.client) {
+          // For client-scoped roles without explicit client, use the creator's client
+          userData.client = req.user.client._id
+        } else if (client) {
+          // Use the provided client
+          userData.client = client
+        } else {
+          return res.status(400).json({ 
+            message: 'Client is required for client-scoped roles' 
+          })
+        }
+      } else if (client) {
+        // For system roles, client is optional
         userData.client = client
+      }
+
+      // Set createdBy if user is authenticated
+      if (req.user) {
+        userData.createdBy = req.user._id
       }
 
       // Create the user
